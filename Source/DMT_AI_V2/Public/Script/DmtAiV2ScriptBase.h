@@ -236,7 +236,7 @@ protected:
 	TMap<AActor*, FAiTrackedActorData> NeutralActorData;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Perceived Actors")
-	TMap<AActor*, FAiTrackedActorData>FriendlyActorData;
+	TMap<AActor*, FAiTrackedActorData> FriendlyActorData;
 
 	UWorld* WorldContext;
 

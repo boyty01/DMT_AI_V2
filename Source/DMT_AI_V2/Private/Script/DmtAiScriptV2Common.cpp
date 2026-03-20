@@ -267,20 +267,35 @@ void UDmtAiScriptV2Common::AssessAIState()
 	{
 		SetCurrentAIState(NewState);
 
+		if (ParentComponent.IsValid())
+		{
+			switch (NewState)
+			{
+			case ENPCAIState::ATTACK:
+				ParentComponent->SetSightPeripheralVisionHalfAngle(AttackStateSightVisionAngle);
+				break;
+
+			case ENPCAIState::ALERT:
+				ParentComponent->SetSightPeripheralVisionHalfAngle(AlertStateSightVisionAngle);
+				break;
+
+			case ENPCAIState::PATROL:
+				ParentComponent->SetSightPeripheralVisionHalfAngle(PatrolStateSightVisionAngle);
+				break;
+			}
+		}
+
 		switch (NewState)
 		{
 		case ENPCAIState::ATTACK:
-			ParentComponent->SetSightPeripheralVisionHalfAngle(AttackStateSightVisionAngle);
 			OnTransitionToAttack();
 			break;
 
 		case ENPCAIState::ALERT:
-			ParentComponent->SetSightPeripheralVisionHalfAngle(AlertStateSightVisionAngle);
 			OnTransitionToAlert();
 			break;
 
 		case ENPCAIState::PATROL:
-			ParentComponent->SetSightPeripheralVisionHalfAngle(PatrolStateSightVisionAngle);
 			OnTransitionToPatrol();
 			break;
 		}

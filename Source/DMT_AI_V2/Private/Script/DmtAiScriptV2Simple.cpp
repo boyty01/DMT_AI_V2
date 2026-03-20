@@ -3,6 +3,7 @@
 
 #include "Script/DmtAiScriptV2Simple.h"
 #include "Interface/DmtAiInterfaceV2.h"
+#include "Perception/AISense_Sight.h"
 
 void UDmtAiScriptV2Simple::OnHostileTargetPerceived_Implementation(AActor* Target, FAIStimulus Stimulus, FCharacterAiData CharacterData)
 {
@@ -80,7 +81,7 @@ void UDmtAiScriptV2Simple::UpdatePerceivedTrackedActorState(AActor* Target, FAIS
 	}
 
 	ActiveData->LastStimulusTime = WorldContext->GetTimeSeconds();
-	ActiveData->bSighted = Stimulus.Type.Name.ToString().Contains("Sight");
+	ActiveData->bSighted = (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>());
 	ActiveData->LastSenseLocation = Stimulus.StimulusLocation;
 
 	UpdateDataMaps();
@@ -91,7 +92,7 @@ void UDmtAiScriptV2Simple::UpdateLostTrackedActorState(AActor* Target, FAIStimul
 
 	// We only care about Sight stim, other stim expiry shouldn't refresh any data.
 	FAiTrackedActorData* ActiveData;
-	if (PerceptionMap.Contains(Target) && Stimulus.Type.Name.ToString().Contains("Sight"))
+	if (PerceptionMap.Contains(Target) && Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
 		FAiTrackedActorData& ExistingData = *PerceptionMap.Find(Target);
 		ActiveData = &ExistingData;
@@ -157,7 +158,7 @@ void UDmtAiScriptV2Simple::UpdateDataMaps()
 
 bool UDmtAiScriptV2Simple::HasAnyIgnoreGameplayTags(AActor* Target)
 {
-	if (Target->Implements<UDmtAiInterfaceV2>())
+	if (Target && Target->Implements<UDmtAiInterfaceV2>())
 	{
 		FGameplayTagContainer Container = IDmtAiInterfaceV2::Execute_GetActorGameplayTags(Target);
 		return Container.HasAny(IgnoreTargetTrackingTags);
@@ -168,7 +169,7 @@ bool UDmtAiScriptV2Simple::HasAnyIgnoreGameplayTags(AActor* Target)
 void UDmtAiScriptV2Simple::RemoveTimedOutTargetsFromMap(TMap<AActor*, FAiTrackedActorData>& Map)
 {
 	if (!WorldContext) return;
-	float CurrentTime = WorldContext->TimeSeconds;
+	float CurrentTime = WorldContext->GetTimeSeconds();
 	TArray<AActor*> Timeouts;
 
 	for (auto& Pair : Map)
@@ -176,21 +177,21 @@ void UDmtAiScriptV2Simple::RemoveTimedOutTargetsFromMap(TMap<AActor*, FAiTracked
 		// flag if the target is invalid.
 		if (!Pair.Value.TargetActor.IsValid())
 		{
-			Timeouts.Add(Pair.Value.TargetActor.Get());
+			Timeouts.Add(Pair.Key);
 			continue;
 		}
 
 		// check if the target has ignore tags and mark as timeout if so.
 		if (HasAnyIgnoreGameplayTags(Pair.Value.TargetActor.Get()))
 		{
-			Timeouts.Add(Pair.Value.TargetActor.Get());
+			Timeouts.Add(Pair.Key);
 			continue;
 		}
 
 		// if last stim was outside of timeout then flag for remove.
 		if (CurrentTime - Pair.Value.LastStimulusTime >= ActorTrackingTimeout)
 		{
-			Timeouts.Add(Pair.Value.TargetActor.Get());
+			Timeouts.Add(Pair.Key);
 		}
 	}
 

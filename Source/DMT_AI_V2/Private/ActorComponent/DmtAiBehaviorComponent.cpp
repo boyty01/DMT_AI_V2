@@ -66,7 +66,7 @@ void UDmtAiBehaviorComponent::BeginPlay()
 void UDmtAiBehaviorComponent::OnPerceptionTargetUpdate(AActor* Actor, FAIStimulus Stimulus)
 {
 	OnPerceptionTargetUpdated.Broadcast(Actor, Stimulus);
-	if (ActiveScript.Get()->IsValidLowLevelFast())
+	if (ActiveScript && ActiveScript->IsValidLowLevelFast())
 	{
 		ActiveScript->OnPerceptionTargetUpdated(Actor, Stimulus);
 	}
